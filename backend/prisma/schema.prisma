@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int        @id @default(autoincrement())
+  name        String
+  username    String     @unique
+  password    String
+  role        Role       @default(USER)
+  email       String?    @unique
+  isActive    Boolean    @default(true)
+  tickets     Ticket[]   @relation("UserTickets")
+  assigned    Ticket[]   @relation("AssignedTickets")
+  specialties Category[] @relation("UserSpecialties")
+  createdAt   DateTime   @default(now())
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  tickets     Ticket[]
+  users       User[]   @relation("UserSpecialties")
+  createdAt   DateTime @default(now())
+}
+
+model Ticket {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String
+  status       Status   @default(OPEN)
+  priority     Priority @default(MEDIUM)
+  category     Category @relation(fields: [categoryId], references: [id])
+  categoryId   Int
+  author       User     @relation("UserTickets", fields: [authorId], references: [id])
+  authorId     Int
+  assignedTo   User?    @relation("AssignedTickets", fields: [assignedToId], references: [id])
+  assignedToId Int?
+  attachments  Attachment[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  closedAt     DateTime?
+}
+
+model Settings {
+  id              Int      @id @default(1)
+  appName         String   @default("Chamado TI")
+  logoPath        String?
+  smtpHost        String?
+  smtpPort        Int?
+  smtpUser        String?
+  smtpPass        String?
+  smtpSecure      Boolean  @default(false)
+  visibleCharts   String   @default("[\"user_open\", \"tech_resolve\", \"resolution_time\", \"category_freq\"]")
+  defaultChartType String  @default("BAR")
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  path      String
+  mimetype  String
+  size      Int
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId  Int
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  USER
+  ADMIN
+  TECHNICIAN
+}
+
+enum Status {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
