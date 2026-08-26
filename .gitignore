@@ -5,3 +5,5 @@ dist-tsc/
 build/
 .DS_Store
 *.log
+backups/
+backend/backups/
