@@ -19,6 +19,12 @@ app.get('/', (req, res) => {
   res.send('Chamado TI API is running');
 });
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-});
+// On Vercel the app is invoked as a serverless function. Locally it continues
+// to listen on the configured port for the existing development workflow.
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+  });
+}
+
+export default app;
