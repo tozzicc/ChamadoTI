@@ -143,6 +143,87 @@ https://chamado-ti.vercel.app/
 
 **Camilo Tozzi**
 
+## Deploy em Produção — Vercel
+
+### Arquitetura atual
+
+O projeto é publicado em um único projeto Vercel usando **Vercel Services**:
+
+- **Frontend:** React/Vite em um serviço separado, com `root` em `frontend`.
+- **Backend:** Node.js + Express em um serviço separado, com `root` em `backend`, `runtime` `container` e `entrypoint` `Dockerfile.vercel`.
+- **PostgreSQL/Prisma:** o banco é externo e configurado por `DATABASE_URL`. O Prisma Client é usado pelo backend. O deploy não deve executar migrations ou seeds automaticamente.
+
+### Configuração da Vercel
+
+- **Framework Preset:** `Services`
+- **Root Directory:** `./`
+- **Production Branch:** `main`
+- Um push para `main` inicia o deploy automático de produção.
+
+Variáveis obrigatórias em produção:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+
+Nunca registre os valores desses secrets neste README ou no repositório.
+
+### Fluxo de roteamento
+
+O frontend atende a aplicação web. As requisições em `/api/*` são encaminhadas pelo `vercel.json` ao serviço `backend`. O Express roda dentro do container do backend, que inicia o servidor HTTP na porta fornecida por `process.env.PORT`.
+
+### Dockerfile do backend
+
+O arquivo `backend/Dockerfile.vercel`:
+
+- instala as dependências do backend;
+- gera o Prisma Client;
+- compila o TypeScript;
+- cria a imagem de runtime de produção;
+- instala OpenSSL nos estágios de build e runtime para compatibilidade com o Prisma;
+- inicia a aplicação com `node dist/index.js`.
+
+OpenSSL é necessário para o Prisma funcionar no container e não deve ser removido sem validar o Prisma em produção.
+
+### Problema de runtime resolvido
+
+Inicialmente, a Vercel transformava o backend Express em uma Function `/index`. O runtime em `/var/task/index.js` falhava com `Cannot find module 'express'`. Tentativas de corrigir apenas o empacotamento dessa Function não resolveram o problema.
+
+A solução definitiva foi executar o backend como container dentro do Vercel Services. Em seguida, o Prisma apresentou erro relacionado à ausência de OpenSSL e encerramento do processo. A instalação de OpenSSL nos estágios build/runtime do Dockerfile resolveu esse problema.
+
+Estado final validado:
+
+- frontend funcionando;
+- backend Express funcionando;
+- Prisma funcionando;
+- PostgreSQL preservado;
+- login funcionando em produção.
+
+### Procedimento de deploy
+
+1. Valide o frontend e o backend localmente.
+2. Execute `git status` e `git diff --check`.
+3. Crie o commit da alteração.
+4. Execute `git push origin main`.
+5. Aguarde o deployment automático e confirme o status `Ready`.
+6. Teste `/api/settings` e o login.
+7. Valide Dashboard, Chamados e Usuários.
+
+### Troubleshooting
+
+| Sintoma | Causa histórica | Estado atual / ação |
+| --- | --- | --- |
+| `Cannot find module 'express'` | Backend empacotado como Function sem dependências de runtime. | O backend deve permanecer em runtime `container`. |
+| Solicitação de instalação de OpenSSL ou falha do Prisma. | OpenSSL ausente no container. | Manter OpenSSL em `backend/Dockerfile.vercel`. |
+| HTTP 500 no login. | Pode ser uma falha de runtime, configuração ou dependência. | Verificar Runtime Logs antes de alterar senha, banco ou executar migrations. |
+
+### Segurança
+
+- Nunca versione `.env`.
+- Nunca coloque `DATABASE_URL` ou `JWT_SECRET` no README.
+- Nunca execute reset ou seed em produção sem backup e autorização.
+- Não apague o banco para resolver erro de runtime ou deploy.
+- Rotacione secrets caso sejam expostos.
+
 🇺🇸 IT Professional focused on ERP, SQL Server, web development and business solutions.
 
 🇧🇷 Profissional de TI com foco em ERP, SQL Server, desenvolvimento web e soluções para negócios.
