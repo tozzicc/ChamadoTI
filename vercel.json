@@ -8,18 +8,21 @@
     "backend": {
       "root": "backend",
       "entrypoint": "src/index.ts",
-      "framework": "express",
-      "includeFiles": ["prisma/**"]
+      "framework": "express"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": { "service": "backend" }
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/(.*)",
-      "destination": { "service": "frontend" }
+      "destination": {
+        "service": "frontend"
+      }
     }
   ]
 }
