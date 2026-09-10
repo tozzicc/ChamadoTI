@@ -19,9 +19,10 @@ app.get('/', (req, res) => {
   res.send('Chamado TI API is running');
 });
 
-// On Vercel the app is invoked as a serverless function. Locally it continues
-// to listen on the configured port for the existing development workflow.
-if (!process.env.VERCEL) {
+// Vercel Functions invoke the exported app directly. The container service
+// starts its own HTTP server using the port provided by Vercel.
+const isVercelContainer = process.env.VERCEL_CONTAINER_RUNTIME === '1';
+if (!process.env.VERCEL || isVercelContainer) {
   app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
   });

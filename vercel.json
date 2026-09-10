@@ -7,13 +7,8 @@
     },
     "backend": {
       "root": "backend",
-      "entrypoint": "src/index.ts",
-      "framework": "express",
-      "functions": {
-        "src/index.ts": {
-          "includeFiles": "node_modules/**"
-        }
-      }
+      "runtime": "container",
+      "entrypoint": "Dockerfile.vercel"
     }
   },
   "rewrites": [
